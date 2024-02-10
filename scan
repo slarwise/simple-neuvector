@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -e
+trap "exit" SIGINT SIGTERM
+
+NAMESPACE="$1"
+
+IMAGES=$(kubectl get pods -n "$NAMESPACE" -o jsonpath="{.items[*].spec['initContainers', 'containers'][*].image}" |
+    tr -s '[[:space:]]' '\n' |
+    sort |
+    uniq)
+echo "Images to scan:"
+echo "$IMAGES"
+
+for IMAGE in $IMAGES; do
+    docker run --rm neuvector/scanner:latest -i $IMAGE
+done
